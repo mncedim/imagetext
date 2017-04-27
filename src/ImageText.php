@@ -26,6 +26,10 @@ class ImageText
     const TYPE_PNG          = 'png';
     const TYPE_JPEG         = 'jpg';
 
+    // content disposition
+    const CD_INLINE         = 'inline';
+    const CD_ATTACHMENT     = 'attachment';
+
     /**
      * @var - jpg/png
      */
@@ -120,6 +124,11 @@ class ImageText
      * @var string
      */
     private static $destination = 'browser';
+
+    /**
+     * @var string
+     */
+    private static $contentDisposition = 'inline';
 
     /**
      * @var \Exception
@@ -265,6 +274,14 @@ class ImageText
     public static function setTransparent($transparent)
     {
         self::$transparent = boolval($transparent);
+    }
+
+    /**
+     * @param $cd - inline/attachment
+     */
+    public static function setContentDisposition($cd)
+    {
+        self::$contentDisposition = $cd;
     }
 
     /**
@@ -502,10 +519,27 @@ class ImageText
             if (self::$type == self::TYPE_PNG) {
 
                 header( "Content-type: image/png" );
+                header(
+                    "Content-Disposition: "
+                    . self::$contentDisposition
+                    . "; filename="
+                    . uniqid('md_')
+                    . "."
+                    . self::TYPE_PNG
+                );
                 imagepng($im, null, self::$pngQuality);
+
             } else if (self::$type == self::TYPE_JPEG) {
 
                 header( "Content-type: image/jpg" );
+                header(
+                    "Content-Disposition: "
+                    . self::$contentDisposition
+                    . "; filename="
+                    . uniqid('md_')
+                    . "."
+                    . self::TYPE_JPEG
+                );
                 imagejpeg($im, null, self::$jpegQuality);
             }
 
