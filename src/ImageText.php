@@ -6,7 +6,7 @@
  * Time: 10:23 AM
  */
 
-namespace Mncedim\ImageText;
+namespace Mncedim\Image;
 
 /**
  * Class ImageText

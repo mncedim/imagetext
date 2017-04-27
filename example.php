@@ -8,7 +8,7 @@
 
 require __DIR__.'/src/ImageText.php';
 
-use Mncedim\ImageText;
+use Mncedim\Image\ImageText;
 
 ImageText::setFontFile(__DIR__.'/example/arial.ttf');
 ImageText::setFontColour('#ffffff');
