@@ -298,7 +298,7 @@ class ImageText
     /**
      * @param $text
      */
-    private function make($text)
+    private static function make($text)
     {
         try {
 
