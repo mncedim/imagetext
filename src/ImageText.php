@@ -286,7 +286,7 @@ class ImageText
 
     /**
      * @param string $type
-     * @param null $text
+     * @param null|string|array $text
      * @param string $destination
      * @param int $quality
      */
@@ -319,74 +319,127 @@ class ImageText
     {
         try {
 
-            if (is_string(self::$background) && is_file(self::$background)) {
+            // base image
+            $im = self::init();
 
-                // create using image background
-
-                $bgImageType = substr(self::$background, -3);
-
-                if ($bgImageType == self::TYPE_PNG) {
-
-                    $im = imagecreatefrompng(self::$background);
-                } else if ($bgImageType == self::TYPE_JPEG) {
-
-                    $im = imagecreatefromjpeg(self::$background);
-                } else {
-                    throw new \Exception("Invalid background extension, expecting .png or .jpg", 1);
-                }
-
-            } else if (self::$transparent) {
-
-                // create image with transparent background
-
-                $im = imagecreatetruecolor(self::$width, self::$height);
-
-                imagealphablending($im, false);
-                $transparency = imagecolorallocatealpha($im, 0, 0, 0, 127);
-                imagefill($im, 0, 0, $transparency);
-                imagesavealpha($im, true);
-
-            } else {
-
-                // create image from scratch
-                $im = imagecreatetruecolor(self::$width, self::$height);
-
-                if (!isset(self::$background['A'])) {
-
-                    $background = imagecolorallocate(
-                        $im, self::$background['R'], self::$background['G'], self::$background['B']
-                    );
-                } else {
-
-                    $background = imagecolorallocatealpha(
-                        $im,
-                        self::$background['R'],
-                        self::$background['G'],
-                        self::$background['B'],
-                        self::$background['A']
-                    );
-                }
-
-                imagefilledrectangle($im, 0, 0, self::$width, self::$height, $background);
-            }
-
-            // add text
+            // prep received text
             if (is_string($text)) {
                 $text = array($text);
             }
 
-            foreach ($text as $line => $content) {
+            $lines          = [];
+            $availableWidth = self::$width - self::$x;
 
-                self::addTextLine($im, $line, $content);
+            // go through received text-lines and break lines with text overflow
+            foreach ($text as $row) {
+
+                $textLine = '';
+
+                $words = explode(' ', $row);
+
+                foreach ($words as $word) {
+
+                    // get width of current line
+                    $box    = imagettfbbox(self::$fontSize, self::$angle, self::$fontFile, $textLine . $word);
+                    $width  = $box[4] - $box[0];
+
+                    if($width > $availableWidth) {
+
+                        // current text line has reached it's max width to prevent an overflow
+                        $lines[] = trim($textLine);
+
+                        //break to a new line
+                        $textLine = '';
+                    }
+
+                    // add more words to current line
+                    $textLine .= $word . ' ';
+                }
+
+                if (trim($textLine) != '') {
+
+                    // last text line
+                    $lines[] = trim($textLine);
+                }
             }
 
-            //render image
+            // write text to image
+            foreach ($lines as $lineIndex => $content) {
+
+                self::addTextLine($im, $lineIndex, $content);
+            }
+
+            // render image
             self::render($im);
 
         } catch (\Exception $e) {
 
             self::$exception = $e;
         }
+    }
+
+    /**
+     * @return resource
+     * @throws \Exception
+     */
+    private static function init()
+    {
+        if (is_string(self::$background) && is_file(self::$background)) {
+
+            // create using image background
+
+            $bgImageType = substr(self::$background, -3);
+
+            if ($bgImageType == self::TYPE_PNG) {
+
+                $im = imagecreatefrompng(self::$background);
+            } else if ($bgImageType == self::TYPE_JPEG) {
+
+                $im = imagecreatefromjpeg(self::$background);
+            } else {
+                throw new \Exception("Invalid background extension, expecting .png or .jpg", 1);
+            }
+
+            // set the width and height to that of the background image
+            self::$width  = imagesx($im);
+            self::$height = imagesy($im);
+
+        } else if (self::$transparent) {
+
+            // create image with transparent background
+
+            $im = imagecreatetruecolor(self::$width, self::$height);
+
+            imagealphablending($im, false);
+            $transparency = imagecolorallocatealpha($im, 0, 0, 0, 127);
+            imagefill($im, 0, 0, $transparency);
+            imagesavealpha($im, true);
+
+        } else {
+
+            // create image from scratch
+            $im = imagecreatetruecolor(self::$width, self::$height);
+
+            if (!isset(self::$background['A'])) {
+
+                $background = imagecolorallocate(
+                    $im, self::$background['R'], self::$background['G'], self::$background['B']
+                );
+            } else {
+
+                $background = imagecolorallocatealpha(
+                    $im,
+                    self::$background['R'],
+                    self::$background['G'],
+                    self::$background['B'],
+                    self::$background['A']
+                );
+            }
+
+            imagefilledrectangle($im, 0, 0, self::$width, self::$height, $background);
+        }
+
+        return $im;
     }
 
     /**
