@@ -461,12 +461,12 @@ class ImageText
 
             case self::ALIGN_CENTER:
                 $xr         = abs(max($box[2], $box[4]));
-                self::$x    = intval(($xi - $xr) / 2);
+                self::$x    = intval((self::$width - $xr) / 2);
                 break;
 
             case self::ALIGN_RIGHT:
                 $textWidth  = abs($box[4] - $box[0]);
-                self::$x    = $xi - $textWidth;
+                self::$x    = self::$width - $textWidth;
                 break;
         }
 
@@ -475,7 +475,7 @@ class ImageText
 
             case self::V_ALIGN_MIDDLE:
                 $yr         = abs(max($box[5], $box[7]));
-                self::$y    = intval(($yi + $yr) / 2)-2;
+                self::$y    = intval((self::$height + $yr) / 2)-2;
                 break;
 
             case self::V_ALIGN_BOTTOM:
@@ -498,43 +498,27 @@ class ImageText
             );
         }
 
-        if ($line == 0) {
+        $y = ($line == 0 ? self::$y : (self::$y + (self::$fontSize + self::$lineSpacing)*$line));
 
-            // first line of text
+        // text shadow
+        if (!empty(self::$fontShadow)) {
 
-            // text shadow
-            if (!empty(self::$fontShadow)) {
-
-                // add some shadow to the text
-                self::applyFontShadow($im, $text, (self::$y + self::$fontShadow['space']));
-            }
-
-            imagettftext(
-                $im, self::$fontSize, self::$angle, self::$x, self::$y, $textColour, self::$fontFile, $text
-            );
-
-        } else {
-
-            // text shadow
-            if (!empty(self::$fontShadow)) {
-
-                // add some shadow to the text
-                self::applyFontShadow(
-                    $im, $text, ((self::$y + (self::$fontSize + self::$lineSpacing)*$line)+ self::$fontShadow['space'])
-                );
-            }
-
-            imagettftext(
-                $im,
-                self::$fontSize,
-                self::$angle,
-                self::$x,
-                (self::$y + (self::$fontSize + self::$lineSpacing)*$line),
-                $textColour,
-                self::$fontFile,
-                $text
+            // add some shadow to the text
+            self::applyFontShadow(
+                $im, $text, ($y + self::$fontShadow['space'])
             );
         }
+
+        imagettftext(
+            $im,
+            self::$fontSize,
+            self::$angle,
+            self::$x,
+            $y,
+            $textColour,
+            self::$fontFile,
+            $text
+        );
     }
 
     /**
