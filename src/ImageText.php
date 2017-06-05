@@ -131,10 +131,27 @@ class ImageText
     private static $contentDisposition = 'inline';
 
     /**
+     * @var int
+     */
+    private static $cacheMaxAge = -1;
+
+    /**
+     * @var
+     */
+    private static $image;
+
+    /**
      * @var \Exception
      */
     public static $exception;
 
+    /**
+     * @return mixed
+     */
+    public static function getRaw()
+    {
+        return self::$image;
+    }
 
     /**
      * @param $text
@@ -285,6 +302,14 @@ class ImageText
     }
 
     /**
+     * @param $age
+     */
+    public static function setCacheMaxAge($age)
+    {
+        self::$cacheMaxAge = (int)$age;
+    }
+
+    /**
      * @param string $type
      * @param null|string|array $text
      * @param string $destination
@@ -309,7 +334,7 @@ class ImageText
             $text = self::$text;
         }
 
-        self::make($text);
+        self::make($text, $destination);
     }
 
     /**
@@ -367,6 +392,11 @@ class ImageText
             foreach ($lines as $lineIndex => $content) {
 
                 self::addTextLine($im, $lineIndex, $content);
+            }
+
+            if (is_null(self::$destination)) {
+                self::$image = $im;
+                return;
             }
 
             // render image
@@ -556,6 +586,11 @@ class ImageText
             if (self::$type == self::TYPE_PNG) {
 
                 header( "Content-type: image/png" );
+
+                if (self::$cacheMaxAge > -1) {
+                    header("Cache-Control: no-cache, max-age=" . self::$cacheMaxAge);
+                }
+
                 header(
                     "Content-Disposition: "
                     . self::$contentDisposition
@@ -569,6 +604,11 @@ class ImageText
             } else if (self::$type == self::TYPE_JPEG) {
 
                 header( "Content-type: image/jpg" );
+
+                if (self::$cacheMaxAge > -1) {
+                    header("Cache-Control: no-cache, max-age=" . self::$cacheMaxAge);
+                }
+
                 header(
                     "Content-Disposition: "
                     . self::$contentDisposition
